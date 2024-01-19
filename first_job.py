@@ -66,14 +66,11 @@ df=rds_df.union(s3_df)
 
 # performing left join on combined table
 
-joined_df = df.alias("df").join(taxi_zone_lkp_df.select("LocationID", "Borough", "Zone").alias("yt_merged1"),
-     col("df.PULocationID") == col("yt_merged1.LocationID"),
-     "left"
-).join(
-     taxi_zone_lkp_df.select("LocationID", "Borough", "Zone").alias("yt_merged2"),
-     col("df.DOLocationID") == col("yt_merged2.LocationID"),
-     "left"
-)
+broadcastedTaxiZoneLookup = broadcast(taxi_zone_lkp_df.select("LocationID", "Borough", "Zone")) 
+
+joinedDF = df.alias("df") 
+     .join(broadcastedTaxiZoneLookup.alias("yt_merged1"), col("df.PULocationID") === col("yt_merged1.LocationID"), "left") 
+     .join(broadcastedTaxiZoneLookup.alias("yt_merged2"), col("df.DOLocationID") === col("yt_merged2.LocationID"), "left") 
 
 # renaming columns from zones table
 
